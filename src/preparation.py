@@ -70,7 +70,8 @@ class col_processing:
         return df
 
 
-    def apply_PCA(X, n_components, show_plot):
+    def apply_PCA(df, X, n_components, show_plot): #df : initial dataframe, #X: dataframe which has to be reduced
+        #df : 오리지널 데이터 프레임, X: PCA 가 필요한 컬럼들만 있는 데이터프레임
         from sklearn.decomposition import PCA
         pca = PCA(n_components=n_components)  # if 0.9 = 원래 데이터의 90%를 보존
         pca_090 = pca.fit(X)  # 학습 및 변환
@@ -94,15 +95,23 @@ class col_processing:
         pca_df = pd.DataFrame(reduced_X, columns=labels)
         print(pca_df)
 
-        return pca_df
+        df_dropped = df.drop(columns = X.columns, axis =1 )
+        df = pd.merge(df_dropped, pca_df, axis =1 )
+
+        return df
 
         # 다중공선성 계산
-    def VIF_cal(self, df):
+    def VIF_cal(self, df, X):#df : initial dataframe, #X: dataframe which has to be reduced
+        #df : 오리지널 데이터 프레임, X: PCA 가 필요한 컬럼들만 있는 데이터프레임
         VIF_table = pd.DataFrame({
-            "VIF Factor": [variance_inflation_factor(df.values, idx) for idx in range(df.shape[1])],
-            "features": df.columns,
+            "VIF Factor": [variance_inflation_factor(X.values, idx) for idx in range(X.shape[1])],
+            "features": X.columns,
         })
-        return VIF_table
+        print(VIF_table)
+        VIF_table = VIF_table.sort_values('VIF Factor', ascending=False)
+        VIF_list = list(VIF_table.features)
+        df =df.drop(columns = VIF_list[0]) #drop highest VIF factor column 
+        return df
 
 
     #train&test column 동시에 column drop
